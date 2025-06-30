@@ -10,7 +10,10 @@ import { authenticate } from './middleware/authenticate';
 dotenv.config();
 
 const app = express();
-app.use(cors());
+app.use(cors({
+  origin: "https://expense-tracking-frontend-beta.vercel.app", // or "*"
+  credentials: true
+}));
 app.use(express.json());
 
 app.use('/api/auth', authRoutes);
