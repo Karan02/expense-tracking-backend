@@ -50,7 +50,7 @@ router.post('/', async (req, res, next) => {
 
 router.get('/', async (req, res, next) => {
   try {
-    const user = req.user;
+    const user = req.body.user;
 
     const { startDate, endDate, category } = req.query;
 
