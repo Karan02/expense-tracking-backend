@@ -10,10 +10,23 @@ import { authenticate } from './middleware/authenticate';
 dotenv.config();
 
 const app = express();
-app.use(cors({
-  origin: "https://expense-tracking-frontend-beta.vercel.app", // or "*"
-  credentials: true
-}));
+const allowedOrigins = [
+  'https://expense-tracking-frontend-beta.vercel.app',
+  'http://localhost:5173', // for local dev (optional)
+];
+
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
+    credentials: true,
+  })
+);
 app.use(express.json());
 
 app.use('/api/auth', authRoutes);
