@@ -1,17 +1,46 @@
 import express from 'express';
 import bcrypt from 'bcryptjs';
 import prisma from '../lib/prisma';
+import jwt from 'jsonwebtoken';
 
 const router = express.Router();
 
-router.post('/login', (req, res) => {
-  const { email } = req.body;
-  if (!email) return res.status(400).json({ message: 'Email required' });
 
-  const mockUser = { id: '1', name: 'John', email, role: 'admin' };
-  res.json({ token: JSON.stringify(mockUser) }); // fake token
+router.post('/login', async (req, res) => {
+  const { email, password } = req.body;
+
+  if (!email || !password)
+    return res.status(400).json({ message: 'Email and password are required' });
+
+  try {
+    const user = await prisma.user.findUnique({ where: { email } });
+    if (!user) return res.status(401).json({ message: 'Invalid email or password' });
+
+    const passwordMatch = await bcrypt.compare(password, user.password);
+    if (!passwordMatch)
+      return res.status(401).json({ message: 'Invalid email or password' });
+
+    // Create JWT token
+    const token = jwt.sign(
+      { id: user.id, name: user.name, role: user.role },
+      process.env.JWT_SECRET || 'default-secret-key',
+      { expiresIn: '7d' }
+    );
+
+    res.json({
+      token,
+      user: {
+        id: user.id,
+        name: user.name,
+        role: user.role,
+        email: user.email,
+      },
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Server error' });
+  }
 });
-
 
 router.post('/register', async (req, res, next) => {
   try {
